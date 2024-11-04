@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Get Clarity - Loan Repayment Calculator</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Get Clarity: Loan Repayment Calculator</h1>
+        
+        <form id="loan-form" class="form">
+            <label>Loan Currency:</label>
+            <select name="currency" id="loanCurrency" onchange="updateSalaryCurrency()">
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="AUD">AUD</option>
+            </select><br><br>
+            
+            <label>Loan Amount:</label>
+            <input type="number" name="loan_amount" required><br><br>
+            
+            <label>Interest Rate (Annual %):</label>
+            <input type="number" name="interest_rate" step="0.01" required><br><br>
+            
+            <label>Tenure:</label>
+            <input type="number" name="tenure" id="tenureInput" oninput="updateTimelineMax()" required>
+            <select name="tenure_type" onchange="updateTimelineMax()">
+                <option value="years">Years</option>
+                <option value="months" selected>Months</option>
+            </select><br><br>
+            
+            <label>Loan Start Date:</label>
+            <input type="date" name="start_date" required><br><br>
+            
+            <label>Salary Currency:</label>
+            <select name="salary_currency" id="salaryCurrency">
+                <option value="INR">INR</option>
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="AUD" selected>AUD</option>
+            </select><br><br>
+            
+            <label>Monthly Salary:</label>
+            <input type="number" name="salary" id="salaryInput" placeholder="Enter your monthly salary" required oninput="setDefaultSavings()"><br><br>
+            
+            <label>Monthly Savings for Loan Repayment:</label>
+            <input type="range" id="savingsSlider" name="savings" min="0" max="100" oninput="updateSavings(this.value)">
+            <span id="savingsAmount">0</span><br><br>
+            
+            <label>Desired Loan Repayment Timeline:</label>
+            <input type="range" id="timelineSlider" name="timeline" min="1" value="10" oninput="updateTimeline(this.value)">
+            <span id="timelineAmount">10</span> months / <span id="timelineYears">0.83</span> years<br><br>
+            
+            <button type="submit">Calculate EMI</button>
+        </form>
+        
+        <h2>Results</h2>
+        <p>Monthly EMI: <span id="emi"></span></p>
+        <p>Loan Completion Date: <span id="completion_date"></span></p>
+        <p>Minimum Monthly Payment Required: <span id="minPayment"></span></p>
+        <p id="feedback" class=""></p>
+
+
+    </div>
+
+    <script>
+        
+        function updateSalaryCurrency() {
+            const loanCurrency = document.getElementById('loanCurrency').value;
+            document.getElementById('salaryCurrency').value = loanCurrency;
+        }
+
+        function updateTimelineMax() {
+            const tenure = document.getElementById('tenureInput').value;
+            const tenureType = document.querySelector('select[name="tenure_type"]').value;
+            const maxTimeline = tenureType === 'years' ? tenure * 12 : tenure;
+            document.getElementById('timelineSlider').max = maxTimeline;
+            document.getElementById('timelineAmount').textContent = document.getElementById('timelineSlider').value;
+        }
+
+        function setDefaultSavings() {
+            const salary = document.getElementById('salaryInput').value;
+            const savingsAmount = document.getElementById('savingsAmount');
+            const defaultSavings = (salary / 2).toFixed(2);
+            savingsAmount.textContent = defaultSavings;
+            document.getElementById('savingsSlider').value = 50; // Set slider to 50% by default
+        }
+
+        function updateSavings(value) {
+            const salary = document.getElementById('salaryInput').value;
+            const savingsAmount = document.getElementById('savingsAmount');
+            savingsAmount.textContent = (value * salary / 100).toFixed(2);
+        }
+
+        function updateTimeline(value) {
+            const timelineAmount = document.getElementById('timelineAmount');
+            const timelineYears = document.getElementById('timelineYears');
+            
+            timelineAmount.textContent = value;
+            timelineYears.textContent = (value / 12).toFixed(2);
+        }
+
+        document.getElementById('loan-form').onsubmit = async function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const response = await fetch('/calculate', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            document.getElementById('emi').textContent = `${data.emi}`;
+            document.getElementById('completion_date').textContent = data.completion_date;
+            document.getElementById('minPayment').textContent = `${data.min_payment}`;
+
+            const feedback = document.getElementById('feedback');
+            feedback.className = data.is_affordable ? 'green' : 'red';
+            feedback.textContent = data.is_affordable 
+                ? "Your salary and savings are sufficient to clear the loan on time!" 
+                : "Warning: Increase your savings or timeline to meet the repayment goal.";
+
+            // Prepare data for Repayment vs Salary Comparison chart
+            const timelineMonths = parseInt(formData.get("timeline"));
+            const yearlyRepayment = parseFloat(data.emi) * 12;
+            const yearlySalary = parseFloat(formData.get("salary")) * 12;
+
+            // X-axis labels based on timeline: Use months if <= 36 months, otherwise years
+            let labels, repaymentData, salaryData;
+            if (timelineMonths <= 36) {
+                labels = Array.from({ length: timelineMonths }, (_, i) => `Month ${i + 1}`);
+                repaymentData = Array(timelineMonths).fill(data.emi);
+                salaryData = Array(timelineMonths).fill(formData.get("salary"));
+            } else {
+                const years = Math.ceil(timelineMonths / 12);
+                labels = Array.from({ length: years }, (_, i) => `Year ${i + 1}`);
+                repaymentData = Array(years).fill(yearlyRepayment);
+                salaryData = Array(years).fill(yearlySalary);
+            }
+
+            const currencyLabel = formData.get("currency");
+
+            
+        };
+    </script>
+</body>
+</html>
