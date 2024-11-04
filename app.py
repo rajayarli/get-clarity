@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, jsonify
 from LoanCalculator import LoanCalculator
 from datetime import datetime, timedelta
@@ -79,4 +80,5 @@ def calculate():
     })
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Heroku provides $PORT
+    app.run(host='0.0.0.0', port=port, debug=True)
