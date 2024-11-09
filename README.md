@@ -9,12 +9,13 @@ Customizable Options: Users can tailor the app to meet their specific needs and 
 
 To get a local copy up and running, follow these steps.
 
-Prerequisites
-[List prerequisites here, e.g., Node.js, npm]
 Installation
 Clone the repository:
 git clone https://github.com/rajayarli/get-clarity.git
+
+
 Navigate into the project directory:
+
 cd getclarity
 Install dependencies:
 npm install
@@ -36,6 +37,9 @@ Create a new branch (git checkout -b feature/YourFeature).
 Commit your changes (git commit -m 'Add YourFeature').
 Push to the branch (git push origin feature/YourFeature).
 Create a pull request.
+
+
+
 License
 
 Distributed under the MIT License. See LICENSE for more information.
@@ -43,8 +47,7 @@ Distributed under the MIT License. See LICENSE for more information.
 Contact
 
 Raja Ramesh Yarlagadda
-LinkedIn Profile
-Email
+rajarameshy1@gmail.com
 
 
 
